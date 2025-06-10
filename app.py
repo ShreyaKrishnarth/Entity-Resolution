@@ -475,7 +475,13 @@ elif page == "Master Catalogue":
     
     # Master catalogue preview
     st.subheader("Master Catalogue Preview")
-    st.dataframe(master_catalogue.head(20), use_container_width=True)
+    
+    # Show column information
+    if not master_catalogue.empty:
+        st.info(f"Output contains {len(master_catalogue.columns)} columns: {', '.join(master_catalogue.columns)}")
+        st.dataframe(master_catalogue.head(20), use_container_width=True)
+    else:
+        st.warning("Master catalogue is empty")
     
     # Category distribution
     if 'category' in master_catalogue.columns:
@@ -505,12 +511,29 @@ elif page == "Export & Documentation":
     with col1:
         # Export master catalogue
         if st.button("📥 Download Master Catalogue", type="primary"):
+            # Ensure only required columns are in the output
+            output_df = st.session_state.master_catalogue.copy()
+            
+            # Define the exact columns we want in the output
+            required_output_columns = ['product_name', 'description', 'url', 'category', 'source']
+            
+            # Filter to only include available required columns
+            available_columns = [col for col in required_output_columns if col in output_df.columns]
+            
+            if available_columns:
+                output_df = output_df[available_columns]
+            
+            # Show preview of what will be downloaded
+            st.subheader("Export Preview")
+            st.info(f"Exporting {len(output_df)} products with columns: {', '.join(output_df.columns)}")
+            st.dataframe(output_df.head(5), use_container_width=True)
+            
             csv_buffer = io.StringIO()
-            st.session_state.master_catalogue.to_csv(csv_buffer, index=False)
+            output_df.to_csv(csv_buffer, index=False)
             csv_string = csv_buffer.getvalue()
             
             st.download_button(
-                label="Download CSV",
+                label="Download CSV File",
                 data=csv_string,
                 file_name=f"master_catalogue_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                 mime="text/csv"

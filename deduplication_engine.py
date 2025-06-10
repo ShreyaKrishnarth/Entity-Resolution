@@ -154,11 +154,23 @@ class DeduplicationEngine:
             master_df = master_df.drop(index=list(rows_to_remove))
             master_df = master_df.reset_index(drop=True)
             
-            # Add master catalogue metadata
-            master_df['is_merged'] = master_df.index.isin([
-                rep for group in duplicate_groups for rep in [self._select_representative(df, group)]
-                if len(group) > 1
-            ])
+            # Filter to only include required output columns
+            required_columns = ['name', 'description', 'url', 'category', 'source']
+            output_columns = []
+            
+            for col in required_columns:
+                if col in master_df.columns:
+                    output_columns.append(col)
+            
+            # Keep only the required columns in the final output
+            if output_columns:
+                master_df = master_df[output_columns].copy()
+            
+            # Rename 'name' to 'product_name' for clarity in output
+            if 'name' in master_df.columns:
+                master_df = master_df.rename(columns={'name': 'product_name'})
+            
+            # Add metadata
             master_df['catalogue_created_at'] = pd.Timestamp.now()
             
             self.logger.info(f"Created master catalogue with {len(master_df)} unique products")

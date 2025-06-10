@@ -247,8 +247,8 @@ class DataProcessor:
         for df in dfs[1:]:
             common_cols = common_cols.intersection(set(df.columns))
         
-        # Prioritize important columns for deduplication
-        priority_columns = ['name', 'description', 'category', 'url', 'source']
+        # Prioritize important columns for deduplication and output
+        priority_columns = ['name', 'description', 'url', 'category', 'source']
         common_cols_list = []
         
         # Add priority columns first
