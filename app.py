@@ -827,9 +827,9 @@ elif page == "Deduplication":
     with col1:
         similarity_threshold = st.slider(
             "Similarity Threshold",
-            min_value=0.5,
+            min_value=0.3,
             max_value=1.0,
-            value=0.8,
+            value=0.6,
             step=0.05,
             help="Products with similarity above this threshold will be considered duplicates"
         )

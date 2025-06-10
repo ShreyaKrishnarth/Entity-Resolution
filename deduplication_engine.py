@@ -33,7 +33,7 @@ class DeduplicationEngine:
         
         try:
             # Extract configuration
-            threshold = config.get('similarity_threshold', 0.8)
+            threshold = config.get('similarity_threshold', 0.6)
             algorithm = config.get('algorithm', 'fuzzy_ratio')
             primary_field = config.get('primary_field', 'name')
             use_secondary = config.get('use_secondary_fields', True)
@@ -61,22 +61,24 @@ class DeduplicationEngine:
                         progress = (comparison_count / total_comparisons) * 100
                         progress_callback(progress, f"Comparing products... {comparison_count}/{total_comparisons}")
                     
-                    # Skip exact same product (same index)
-                    if i == j:
+                    # Get the text values for comparison
+                    text1 = str(df_clean.iloc[i][primary_field]) if primary_field in df_clean.columns else ''
+                    text2 = str(df_clean.iloc[j][primary_field]) if primary_field in df_clean.columns else ''
+                    
+                    # Skip if either text is empty
+                    if not text1.strip() or not text2.strip():
                         continue
                     
                     # Calculate primary similarity
-                    similarity = similarity_func(
-                        df_clean.iloc[i][primary_field],
-                        df_clean.iloc[j][primary_field]
-                    )
+                    similarity = similarity_func(text1, text2)
                     
                     # Apply secondary field confirmation if enabled
-                    if use_secondary and similarity >= threshold * 0.9:
+                    if use_secondary and similarity >= threshold * 0.8:
                         secondary_sim = self._calculate_secondary_similarity(
                             df_clean.iloc[i], df_clean.iloc[j], algorithm
                         )
-                        similarity = (similarity + secondary_sim) / 2
+                        # Weight primary field more heavily
+                        similarity = (similarity * 0.7) + (secondary_sim * 0.3)
                     
                     # Add to duplicates if above threshold
                     if similarity >= threshold:
@@ -167,8 +169,11 @@ class DeduplicationEngine:
                 master_df = master_df[output_columns].copy()
             
             # Rename 'name' to 'product_name' for clarity in output
+            column_renames = {}
             if 'name' in master_df.columns:
-                master_df = master_df.rename(columns={'name': 'product_name'})
+                column_renames['name'] = 'product_name'
+            if column_renames:
+                master_df.rename(columns=column_renames, inplace=True)
             
             # Add metadata
             master_df['catalogue_created_at'] = pd.Timestamp.now()
