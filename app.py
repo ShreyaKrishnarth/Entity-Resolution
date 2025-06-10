@@ -133,14 +133,83 @@ if page == "Data Upload":
             except Exception as e:
                 st.error(f"Error loading sample datasets: {str(e)}")
     
-    # Process data button
+    # Column selection and processing
     if len(st.session_state.datasets) >= 2:
+        st.markdown("---")
+        st.subheader("Column Selection")
+        
+        # Get all available columns from both datasets
+        all_columns = set()
+        for dataset_info in st.session_state.datasets.values():
+            all_columns.update(dataset_info['data'].columns.tolist())
+        
+        # Remove 'source' if it exists since we add it automatically
+        all_columns.discard('source')
+        all_columns = sorted(list(all_columns))
+        
+        # Create column selection interface
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.write("**Available Columns:**")
+            for dataset_key, dataset_info in st.session_state.datasets.items():
+                with st.expander(f"{dataset_info['name']} ({len(dataset_info['data'])} rows)"):
+                    cols_info = []
+                    for col in dataset_info['data'].columns:
+                        null_count = dataset_info['data'][col].isnull().sum()
+                        null_pct = (null_count / len(dataset_info['data'])) * 100
+                        cols_info.append(f"• {col} ({null_pct:.1f}% missing)")
+                    st.write("\n".join(cols_info))
+        
         with col2:
-            if st.button("🧹 Process Data", type="primary"):
-                with st.spinner("Processing data..."):
+            st.write("**Select Columns to Process:**")
+            
+            # Quick selection options
+            col2_1, col2_2 = st.columns(2)
+            with col2_1:
+                if st.button("Select All", key="select_all"):
+                    st.session_state.selected_columns = all_columns
+            with col2_2:
+                if st.button("Clear All", key="clear_all"):
+                    st.session_state.selected_columns = []
+            
+            # Initialize selected columns if not exists
+            if 'selected_columns' not in st.session_state:
+                # Default recommended columns
+                recommended = []
+                for col in ['product_name', 'name', 'description', 'category', 'main_category', 'url', 'seller_website']:
+                    if col in all_columns:
+                        recommended.append(col)
+                st.session_state.selected_columns = recommended
+            
+            # Multi-select for columns
+            selected_columns = st.multiselect(
+                "Choose columns:",
+                options=all_columns,
+                default=st.session_state.selected_columns,
+                help="Select the columns you want to include in the processing"
+            )
+            st.session_state.selected_columns = selected_columns
+            
+            # Show selection summary
+            if selected_columns:
+                st.success(f"✅ {len(selected_columns)} columns selected")
+                with st.expander("Selected columns"):
+                    st.write(", ".join(selected_columns))
+            else:
+                st.warning("⚠️ No columns selected")
+        
+        # Process data button
+        if selected_columns:
+            st.markdown("---")
+            if st.button("🧹 Process Selected Data", type="primary", use_container_width=True):
+                with st.spinner("Processing selected columns..."):
                     try:
                         processor = DataProcessor()
-                        processed_data = processor.process_datasets(st.session_state.datasets)
+                        processed_data = processor.process_datasets(
+                            st.session_state.datasets, 
+                            selected_columns
+                        )
                         st.session_state.processed_data = processed_data
                         st.success("✅ Data processed successfully!")
                         st.rerun()

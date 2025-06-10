@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import re
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Any, Tuple, Optional
 import logging
 
 class DataProcessor:
@@ -12,12 +12,13 @@ class DataProcessor:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         
-    def process_datasets(self, datasets: Dict[str, Dict]) -> Dict[str, Any]:
+    def process_datasets(self, datasets: Dict[str, Dict], selected_columns: Optional[List[str]] = None) -> Dict[str, Any]:
         """
         Process multiple datasets and prepare them for deduplication.
         
         Args:
             datasets: Dictionary containing dataset information
+            selected_columns: List of columns to include in processing
             
         Returns:
             Dictionary containing processed data and statistics
@@ -40,6 +41,15 @@ class DataProcessor:
             
             for key, dataset_info in datasets.items():
                 df = dataset_info['data'].copy()
+                
+                # Filter columns if specified
+                if selected_columns:
+                    available_cols = [col for col in selected_columns if col in df.columns]
+                    if available_cols:
+                        df = df[available_cols].copy()
+                    else:
+                        self.logger.warning(f"No selected columns found in {key}")
+                
                 df['source'] = dataset_info['name']  # Add source tracking
                 dfs.append(df)
                 dataset_names.append(key)
