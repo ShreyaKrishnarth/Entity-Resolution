@@ -178,9 +178,10 @@ class DeduplicationEngine:
             if output_columns:
                 master_df = master_df[output_columns].copy()
             
-            # Rename 'name' to 'product_name' for clarity in output
-            if 'name' in master_df.columns:
-                master_df = master_df.rename(columns={'name': 'product_name'}, errors='ignore')
+            # Ensure proper column naming for output
+            if 'name' in master_df.columns and 'product_name' not in master_df.columns:
+                master_df['product_name'] = master_df['name']
+                master_df = master_df.drop('name', axis=1)
             
             # Add metadata
             master_df['catalogue_created_at'] = pd.Timestamp.now()
