@@ -117,8 +117,23 @@ class DataProcessor:
         
         df_copy = df.copy()
         
-        # Rename columns based on mapping
+        # Clean column names and handle duplicates
         df_copy.columns = df_copy.columns.str.lower().str.strip()
+        
+        # Handle duplicate columns by adding suffix
+        cols = df_copy.columns.tolist()
+        seen = {}
+        new_cols = []
+        for col in cols:
+            if col in seen:
+                seen[col] += 1
+                new_cols.append(f"{col}_{seen[col]}")
+            else:
+                seen[col] = 0
+                new_cols.append(col)
+        df_copy.columns = new_cols
+        
+        # Rename columns based on mapping
         df_copy = df_copy.rename(columns=column_mapping)
         
         return df_copy
@@ -171,26 +186,39 @@ class DataProcessor:
             Cleaned text
         """
         # Handle various input types
-        if text is None or pd.isna(text):
-            return ''
-        
-        # Convert to string
-        text_str = str(text)
-        
-        # Check for pandas 'nan' string representation
-        if text_str.lower() in ['nan', 'none', 'null']:
-            return ''
-        
-        # Remove special characters and normalize whitespace
-        text_str = re.sub(r'[^\w\s\.\-\(\)]', ' ', text_str)
-        text_str = re.sub(r'\s+', ' ', text_str)
-        text_str = text_str.strip()
-        
-        # Handle truncated text indicators
-        if text_str.endswith('...[Truncated]'):
-            text_str = text_str.replace('...[Truncated]', '').strip()
-        
-        return text_str
+        try:
+            if text is None:
+                return ''
+            
+            # Check if it's a pandas Series (shouldn't happen but let's be safe)
+            if hasattr(text, 'iloc'):
+                text = text.iloc[0] if len(text) > 0 else ''
+            
+            # Check for NaN values
+            if pd.isna(text):
+                return ''
+            
+            # Convert to string
+            text_str = str(text)
+            
+            # Check for pandas 'nan' string representation
+            if text_str.lower() in ['nan', 'none', 'null']:
+                return ''
+            
+            # Remove special characters and normalize whitespace
+            text_str = re.sub(r'[^\w\s\.\-\(\)]', ' ', text_str)
+            text_str = re.sub(r'\s+', ' ', text_str)
+            text_str = text_str.strip()
+            
+            # Handle truncated text indicators
+            if text_str.endswith('...[Truncated]'):
+                text_str = text_str.replace('...[Truncated]', '').strip()
+            
+            return text_str
+            
+        except Exception as e:
+            # Fallback for any unexpected errors
+            return str(text) if text is not None else ''
     
     def _find_common_columns(self, dfs: List[pd.DataFrame]) -> List[str]:
         """
@@ -239,15 +267,40 @@ class DataProcessor:
         if not dfs or not common_columns:
             return pd.DataFrame()
         
-        # Select only common columns from each dataframe
+        # Select only common columns from each dataframe and ensure no duplicate columns
         filtered_dfs = []
-        for df in dfs:
+        for i, df in enumerate(dfs):
             available_cols = [col for col in common_columns if col in df.columns]
             filtered_df = df[available_cols].copy()
+            
+            # Reset index to avoid duplicate index issues
+            filtered_df = filtered_df.reset_index(drop=True)
+            
+            # Ensure column names are unique within this dataframe
+            filtered_df.columns = pd.Index(filtered_df.columns).drop_duplicates()
+            
             filtered_dfs.append(filtered_df)
         
         # Combine all dataframes
-        combined_df = pd.concat(filtered_dfs, ignore_index=True, sort=False)
+        try:
+            combined_df = pd.concat(filtered_dfs, ignore_index=True, sort=False)
+        except Exception as e:
+            self.logger.error(f"Error combining datasets: {str(e)}")
+            # Fallback: combine manually
+            combined_df = pd.DataFrame()
+            for df in filtered_dfs:
+                if combined_df.empty:
+                    combined_df = df.copy()
+                else:
+                    # Align columns and append
+                    for col in df.columns:
+                        if col not in combined_df.columns:
+                            combined_df[col] = pd.NA
+                    for col in combined_df.columns:
+                        if col not in df.columns:
+                            df = df.copy()
+                            df[col] = pd.NA
+                    combined_df = pd.concat([combined_df, df], ignore_index=True)
         
         # Add unique identifier
         combined_df['unique_id'] = range(len(combined_df))

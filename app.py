@@ -336,12 +336,20 @@ elif page == "Master Catalogue":
     with col1:
         st.metric("Total Unique Products", len(master_catalogue))
     with col2:
-        original_count = st.session_state.processed_data['total_products']
-        duplicates_removed = original_count - len(master_catalogue)
-        st.metric("Duplicates Removed", duplicates_removed)
+        if st.session_state.processed_data:
+            original_count = st.session_state.processed_data['total_products']
+            duplicates_removed = original_count - len(master_catalogue)
+            st.metric("Duplicates Removed", duplicates_removed)
+        else:
+            st.metric("Duplicates Removed", "N/A")
     with col3:
-        dedup_rate = (duplicates_removed / original_count) * 100 if original_count > 0 else 0
-        st.metric("Deduplication Rate", f"{dedup_rate:.1f}%")
+        if st.session_state.processed_data:
+            original_count = st.session_state.processed_data['total_products']
+            duplicates_removed = original_count - len(master_catalogue)
+            dedup_rate = (duplicates_removed / original_count) * 100 if original_count > 0 else 0
+            st.metric("Deduplication Rate", f"{dedup_rate:.1f}%")
+        else:
+            st.metric("Deduplication Rate", "N/A")
     with col4:
         st.metric("Data Quality Score", "85%")  # Based on completeness
     
@@ -416,7 +424,9 @@ elif page == "Export & Documentation":
     # Process Documentation
     st.subheader("Process Documentation")
     
-    if st.session_state.duplicates is not None:
+    if (st.session_state.duplicates is not None and 
+        st.session_state.processed_data is not None and 
+        st.session_state.master_catalogue is not None):
         # Generate documentation
         doc_content = Utils.generate_documentation(
             st.session_state.processed_data,
