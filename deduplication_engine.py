@@ -46,52 +46,62 @@ class DeduplicationEngine:
             # Get similarity function
             similarity_func = self._get_similarity_function(algorithm)
             
-            # Compare all pairs
-            total_comparisons = len(df_clean) * (len(df_clean) - 1) // 2
-            self.logger.info(f"Performing {total_comparisons} comparisons")
-            
-            comparison_count = 0
-            
-            for i in range(len(df_clean)):
-                for j in range(i + 1, len(df_clean)):
-                    comparison_count += 1
-                    
-                    # Update progress if callback provided
-                    if progress_callback and comparison_count % 100 == 0:
-                        progress = (comparison_count / total_comparisons) * 100
-                        progress_callback(progress, f"Comparing products... {comparison_count}/{total_comparisons}")
-                    
-                    # Get the text values for comparison
-                    text1 = str(df_clean.iloc[i][primary_field]) if primary_field in df_clean.columns else ''
-                    text2 = str(df_clean.iloc[j][primary_field]) if primary_field in df_clean.columns else ''
-                    
-                    # Skip if either text is empty
-                    if not text1.strip() or not text2.strip():
-                        continue
-                    
-                    # Calculate primary similarity
-                    similarity = similarity_func(text1, text2)
-                    
-                    # Apply secondary field confirmation if enabled
-                    if use_secondary and similarity >= threshold * 0.8:
-                        secondary_sim = self._calculate_secondary_similarity(
-                            df_clean.iloc[i], df_clean.iloc[j], algorithm
-                        )
-                        # Weight primary field more heavily
-                        similarity = (similarity * 0.7) + (secondary_sim * 0.3)
-                    
-                    # Add to duplicates if above threshold
-                    if similarity >= threshold:
-                        duplicate_pair = {
-                            'product1': df_clean.iloc[i].to_dict(),
-                            'product2': df_clean.iloc[j].to_dict(),
-                            'similarity': similarity,
-                            'algorithm': algorithm,
-                            'primary_field': primary_field,
-                            'index1': i,
-                            'index2': j
-                        }
-                        duplicates.append(duplicate_pair)
+            # Optimize for large datasets - use blocking strategy
+            if len(df_clean) > 500:
+                # Use first-letter blocking for efficiency
+                duplicates = self._find_duplicates_with_blocking(df_clean, config, progress_callback)
+            else:
+                # Compare all pairs for smaller datasets
+                total_comparisons = len(df_clean) * (len(df_clean) - 1) // 2
+                self.logger.info(f"Performing {total_comparisons} comparisons")
+                
+                comparison_count = 0
+                
+                for i in range(len(df_clean)):
+                    for j in range(i + 1, len(df_clean)):
+                        comparison_count += 1
+                        
+                        # Update progress if callback provided
+                        if progress_callback and comparison_count % 100 == 0:
+                            progress = (comparison_count / total_comparisons) * 100
+                            progress_callback(progress, f"Comparing products... {comparison_count}/{total_comparisons}")
+                        
+                        # Get the text values for comparison
+                        text1 = str(df_clean.iloc[i][primary_field]) if primary_field in df_clean.columns else ''
+                        text2 = str(df_clean.iloc[j][primary_field]) if primary_field in df_clean.columns else ''
+                        
+                        # Skip if either text is empty
+                        if not text1.strip() or not text2.strip():
+                            continue
+                        
+                        # Quick pre-filter: skip if texts are very different in length
+                        len_ratio = min(len(text1), len(text2)) / max(len(text1), len(text2))
+                        if len_ratio < 0.3:
+                            continue
+                        
+                        # Calculate primary similarity
+                        similarity = similarity_func(text1, text2)
+                        
+                        # Apply secondary field confirmation if enabled
+                        if use_secondary and similarity >= threshold * 0.8:
+                            secondary_sim = self._calculate_secondary_similarity(
+                                df_clean.iloc[i], df_clean.iloc[j], algorithm
+                            )
+                            # Weight primary field more heavily
+                            similarity = (similarity * 0.7) + (secondary_sim * 0.3)
+                        
+                        # Add to duplicates if above threshold
+                        if similarity >= threshold:
+                            duplicate_pair = {
+                                'product1': df_clean.iloc[i].to_dict(),
+                                'product2': df_clean.iloc[j].to_dict(),
+                                'similarity': similarity,
+                                'algorithm': algorithm,
+                                'primary_field': primary_field,
+                                'index1': i,
+                                'index2': j
+                            }
+                            duplicates.append(duplicate_pair)
             
             # Final progress update
             if progress_callback:
@@ -169,11 +179,8 @@ class DeduplicationEngine:
                 master_df = master_df[output_columns].copy()
             
             # Rename 'name' to 'product_name' for clarity in output
-            column_renames = {}
             if 'name' in master_df.columns:
-                column_renames['name'] = 'product_name'
-            if column_renames:
-                master_df.rename(columns=column_renames, inplace=True)
+                master_df = master_df.rename(columns={'name': 'product_name'}, errors='ignore')
             
             # Add metadata
             master_df['catalogue_created_at'] = pd.Timestamp.now()
@@ -465,3 +472,87 @@ class DeduplicationEngine:
         merged_record['merge_count'] = len(group)
         
         return merged_record
+    
+    def _find_duplicates_with_blocking(self, df: pd.DataFrame, config: Dict[str, Any], progress_callback=None) -> List[Dict[str, Any]]:
+        """
+        Find duplicates using blocking strategy for efficiency with large datasets.
+        
+        Args:
+            df: Input dataframe
+            config: Configuration dictionary
+            progress_callback: Optional progress callback
+            
+        Returns:
+            List of duplicate pairs
+        """
+        duplicates = []
+        threshold = config.get('similarity_threshold', 0.6)
+        algorithm = config.get('algorithm', 'fuzzy_ratio')
+        primary_field = config.get('primary_field', 'name')
+        use_secondary = config.get('use_secondary_fields', True)
+        
+        similarity_func = self._get_similarity_function(algorithm)
+        
+        # Create blocks based on first few characters and length
+        blocks = defaultdict(list)
+        
+        for idx, row in df.iterrows():
+            text = str(row[primary_field]) if primary_field in df.columns else ''
+            if text.strip():
+                # Create block key based on first 3 chars and length category
+                first_chars = text.strip()[:3].lower()
+                length_cat = len(text) // 10  # Group by length categories
+                block_key = f"{first_chars}_{length_cat}"
+                blocks[block_key].append(idx)
+        
+        total_comparisons = sum(len(block) * (len(block) - 1) // 2 for block in blocks.values())
+        comparison_count = 0
+        
+        if progress_callback:
+            progress_callback(0, f"Blocked into {len(blocks)} groups. Starting comparisons...")
+        
+        # Compare within each block
+        for block_key, indices in blocks.items():
+            if len(indices) < 2:
+                continue
+                
+            for i in range(len(indices)):
+                for j in range(i + 1, len(indices)):
+                    comparison_count += 1
+                    
+                    if progress_callback and comparison_count % 1000 == 0:
+                        progress = (comparison_count / total_comparisons) * 100
+                        progress_callback(progress, f"Comparing in blocks... {comparison_count}/{total_comparisons}")
+                    
+                    idx1, idx2 = indices[i], indices[j]
+                    
+                    text1 = str(df.iloc[idx1][primary_field])
+                    text2 = str(df.iloc[idx2][primary_field])
+                    
+                    if not text1.strip() or not text2.strip():
+                        continue
+                    
+                    # Calculate similarity
+                    similarity = similarity_func(text1, text2)
+                    
+                    # Apply secondary field confirmation if enabled
+                    if use_secondary and similarity >= threshold * 0.8:
+                        secondary_sim = self._calculate_secondary_similarity(
+                            df.iloc[idx1], df.iloc[idx2], algorithm
+                        )
+                        similarity = (similarity * 0.7) + (secondary_sim * 0.3)
+                    
+                    # Add to duplicates if above threshold
+                    if similarity >= threshold:
+                        duplicate_pair = {
+                            'product1': df.iloc[idx1].to_dict(),
+                            'product2': df.iloc[idx2].to_dict(),
+                            'similarity': similarity,
+                            'algorithm': algorithm,
+                            'primary_field': primary_field,
+                            'index1': idx1,
+                            'index2': idx2
+                        }
+                        duplicates.append(duplicate_pair)
+        
+        return duplicates

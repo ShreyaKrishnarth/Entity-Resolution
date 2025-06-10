@@ -286,8 +286,18 @@ class DataProcessor:
             # Reset index to avoid duplicate index issues
             filtered_df = filtered_df.reset_index(drop=True)
             
-            # Ensure column names are unique within this dataframe
-            filtered_df.columns = pd.Index(filtered_df.columns).drop_duplicates()
+            # Handle duplicate column names by adding suffix
+            cols = filtered_df.columns.tolist()
+            seen = {}
+            new_cols = []
+            for col in cols:
+                if col in seen:
+                    seen[col] += 1
+                    new_cols.append(f"{col}_{seen[col]}")
+                else:
+                    seen[col] = 0
+                    new_cols.append(col)
+            filtered_df.columns = new_cols
             
             filtered_dfs.append(filtered_df)
         
