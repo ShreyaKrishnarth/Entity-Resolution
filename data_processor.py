@@ -139,8 +139,12 @@ class DataProcessor:
         text_columns = ['name', 'description', 'overview']
         for col in text_columns:
             if col in df_clean.columns:
-                df_clean[col] = df_clean[col].astype(str)
-                df_clean[col] = df_clean[col].apply(self._clean_text)
+                try:
+                    df_clean[col] = df_clean[col].apply(self._clean_text)
+                except Exception as e:
+                    self.logger.warning(f"Error cleaning column {col}: {str(e)}")
+                    # Fallback: convert to string and fill missing values
+                    df_clean[col] = df_clean[col].astype(str).fillna('')
         
         # Clean numeric fields
         numeric_columns = ['jobs', 'companies', 'companies_found_last_week']
@@ -156,32 +160,37 @@ class DataProcessor:
         
         return df_clean
     
-    def _clean_text(self, text: str) -> str:
+    def _clean_text(self, text) -> str:
         """
         Clean individual text field.
         
         Args:
-            text: Input text
+            text: Input text (can be string, float, int, or None)
             
         Returns:
             Cleaned text
         """
-        if pd.isna(text) or text == 'nan':
+        # Handle various input types
+        if text is None or pd.isna(text):
             return ''
         
         # Convert to string
-        text = str(text)
+        text_str = str(text)
+        
+        # Check for pandas 'nan' string representation
+        if text_str.lower() in ['nan', 'none', 'null']:
+            return ''
         
         # Remove special characters and normalize whitespace
-        text = re.sub(r'[^\w\s\.\-\(\)]', ' ', text)
-        text = re.sub(r'\s+', ' ', text)
-        text = text.strip()
+        text_str = re.sub(r'[^\w\s\.\-\(\)]', ' ', text_str)
+        text_str = re.sub(r'\s+', ' ', text_str)
+        text_str = text_str.strip()
         
         # Handle truncated text indicators
-        if text.endswith('...[Truncated]'):
-            text = text.replace('...[Truncated]', '').strip()
+        if text_str.endswith('...[Truncated]'):
+            text_str = text_str.replace('...[Truncated]', '').strip()
         
-        return text
+        return text_str
     
     def _find_common_columns(self, dfs: List[pd.DataFrame]) -> List[str]:
         """

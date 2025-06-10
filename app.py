@@ -107,16 +107,46 @@ if page == "Data Upload":
             except Exception as e:
                 st.error(f"Error loading file: {str(e)}")
     
+    # Load sample datasets button
+    st.markdown("---")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("📋 Load Sample Datasets", type="secondary"):
+            try:
+                # Load the provided sample datasets
+                df1 = pd.read_csv("attached_assets/bd df 1000_1749585466102.csv")
+                df2 = pd.read_csv("attached_assets/ts df 1000_1749585466103.csv")
+                
+                st.session_state.datasets = {
+                    'dataset1': {
+                        'name': 'bd_products.csv',
+                        'data': df1
+                    },
+                    'dataset2': {
+                        'name': 'ts_technologies.csv', 
+                        'data': df2
+                    }
+                }
+                st.success("✅ Sample datasets loaded!")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Error loading sample datasets: {str(e)}")
+    
     # Process data button
     if len(st.session_state.datasets) >= 2:
-        st.markdown("---")
-        if st.button("🧹 Process Data", type="primary"):
-            with st.spinner("Processing data..."):
-                processor = DataProcessor()
-                processed_data = processor.process_datasets(st.session_state.datasets)
-                st.session_state.processed_data = processed_data
-                st.success("✅ Data processed successfully!")
-                st.rerun()
+        with col2:
+            if st.button("🧹 Process Data", type="primary"):
+                with st.spinner("Processing data..."):
+                    try:
+                        processor = DataProcessor()
+                        processed_data = processor.process_datasets(st.session_state.datasets)
+                        st.session_state.processed_data = processed_data
+                        st.success("✅ Data processed successfully!")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Error processing data: {str(e)}")
+                        st.exception(e)
 
 # Page 2: Data Exploration
 elif page == "Data Exploration":
