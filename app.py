@@ -836,7 +836,8 @@ elif page == "Deduplication":
         
         algorithm = st.selectbox(
             "Matching Algorithm",
-            ["fuzzy_ratio", "fuzzy_partial", "fuzzy_token_sort", "tfidf_cosine"],
+            ["fuzzy_token_sort", "fuzzy_ratio", "fuzzy_partial", "tfidf_cosine"],
+            index=0,
             help="Algorithm to use for similarity calculation"
         )
     

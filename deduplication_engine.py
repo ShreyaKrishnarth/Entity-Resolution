@@ -33,8 +33,8 @@ class DeduplicationEngine:
         
         try:
             # Extract configuration
-            threshold = config.get('similarity_threshold', 0.6)
-            algorithm = config.get('algorithm', 'fuzzy_ratio')
+            threshold = config.get('similarity_threshold', 0.75)
+            algorithm = config.get('algorithm', 'fuzzy_token_sort')
             primary_field = config.get('primary_field', 'name')
             use_secondary = config.get('use_secondary_fields', True)
             
