@@ -36,7 +36,7 @@ class DeduplicationEngine:
             threshold = config.get('similarity_threshold', 0.75)
             algorithm = config.get('algorithm', 'fuzzy_token_sort')
             primary_field = config.get('primary_field', 'name')
-            use_secondary = config.get('use_secondary_fields', True)
+            use_secondary = config.get('use_secondary_fields', False)  # Focus on primary field only
             
             self.logger.info(f"Finding duplicates with {algorithm} algorithm, threshold: {threshold}")
             
@@ -166,22 +166,25 @@ class DeduplicationEngine:
             master_df = master_df.drop(index=list(rows_to_remove))
             master_df = master_df.reset_index(drop=True)
             
-            # Filter to only include required output columns
-            required_columns = ['name', 'description', 'url', 'category', 'source']
+            # Ensure proper column naming for output (product_name, description, url, category, source)
+            if 'name' in master_df.columns and 'product_name' not in master_df.columns:
+                master_df['product_name'] = master_df['name']
+                master_df = master_df.drop('name', axis=1)
+            
+            # Filter to only include the exact 5 required output columns
+            required_columns = ['product_name', 'description', 'url', 'category', 'source']
             output_columns = []
             
             for col in required_columns:
                 if col in master_df.columns:
                     output_columns.append(col)
+                else:
+                    # Add missing columns with empty values
+                    master_df[col] = ''
+                    output_columns.append(col)
             
-            # Keep only the required columns in the final output
-            if output_columns:
-                master_df = master_df[output_columns].copy()
-            
-            # Ensure proper column naming for output
-            if 'name' in master_df.columns and 'product_name' not in master_df.columns:
-                master_df['product_name'] = master_df['name']
-                master_df = master_df.drop('name', axis=1)
+            # Keep only the required columns in the exact order
+            master_df = master_df[required_columns].copy()
             
             # Add metadata
             master_df['catalogue_created_at'] = pd.Timestamp.now()

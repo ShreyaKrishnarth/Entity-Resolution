@@ -822,6 +822,14 @@ elif page == "Deduplication":
     # Deduplication settings
     st.subheader("Deduplication Settings")
     
+    # Information about column comparison
+    st.info("""
+    **Column Comparison Logic:**
+    - Comparing `product_name` column from BD dataset with `name` column from TS dataset
+    - Using fuzzy string matching to identify similar product names
+    - Output format: Product Name, Description, URL, Category, Source
+    """)
+    
     col1, col2 = st.columns(2)
     
     with col1:
@@ -850,8 +858,8 @@ elif page == "Deduplication":
         
         use_secondary_fields = st.checkbox(
             "Use Secondary Fields",
-            value=True,
-            help="Use additional fields for confirmation"
+            value=False,
+            help="Use additional fields for confirmation (disabled for focused comparison)"
         )
     
     # Run deduplication

@@ -97,14 +97,13 @@ class DataProcessor:
         Returns:
             Dataframe with standardized column names
         """
-        # Column mapping for common variations
+        # Column mapping - standardize both datasets to use 'name' as the primary comparison field
         column_mapping = {
-            # Name variations
+            # Keep product_name from bd dataset as 'name' for comparison
             'product_name': 'name',
-            'name_clean': 'name',
-            'title': 'name',
+            # Keep name from ts dataset as is
             
-            # Description variations
+            # Other field mappings for additional context
             'description_clean': 'description',
             'desc': 'description',
             'summary': 'description',
