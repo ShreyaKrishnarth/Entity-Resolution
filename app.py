@@ -314,7 +314,15 @@ elif page == "Deduplication":
     
     # Run deduplication
     if st.button("🚀 Find Duplicates", type="primary"):
-        with st.spinner("Finding duplicates..."):
+        # Create progress tracking elements
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        
+        def update_progress(progress, message):
+            progress_bar.progress(progress / 100)
+            status_text.text(message)
+        
+        try:
             dedup_engine = DeduplicationEngine()
             
             # Configure deduplication parameters
@@ -325,15 +333,29 @@ elif page == "Deduplication":
                 'use_secondary_fields': use_secondary_fields
             }
             
-            # Find duplicates
+            # Initialize progress
+            update_progress(0, "Starting duplicate detection...")
+            
+            # Find duplicates with progress callback
             duplicates = dedup_engine.find_duplicates(
                 st.session_state.processed_data['combined_data'],
-                config
+                config,
+                progress_callback=update_progress
             )
             
             st.session_state.duplicates = duplicates
+            
+            # Clear progress elements and show success
+            progress_bar.empty()
+            status_text.empty()
             st.success(f"✅ Found {len(duplicates)} potential duplicate pairs!")
             st.rerun()
+            
+        except Exception as e:
+            progress_bar.empty()
+            status_text.empty()
+            st.error(f"Error finding duplicates: {str(e)}")
+            st.exception(e)
     
     # Display duplicates
     if st.session_state.duplicates is not None:
@@ -379,15 +401,44 @@ elif page == "Deduplication":
         
         # Generate master catalogue
         if st.button("📋 Generate Master Catalogue", type="primary"):
-            with st.spinner("Creating master catalogue..."):
+            # Create progress tracking for catalogue generation
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+            
+            try:
+                status_text.text("Creating master catalogue...")
+                progress_bar.progress(0.2)
+                
                 dedup_engine = DeduplicationEngine()
+                
+                status_text.text("Grouping duplicate records...")
+                progress_bar.progress(0.5)
+                
                 master_catalogue = dedup_engine.create_master_catalogue(
                     st.session_state.processed_data['combined_data'],
                     duplicates
                 )
+                
+                status_text.text("Finalizing catalogue...")
+                progress_bar.progress(0.9)
+                
                 st.session_state.master_catalogue = master_catalogue
+                
+                progress_bar.progress(1.0)
+                status_text.text("Master catalogue created successfully!")
+                
+                # Clear progress elements
+                progress_bar.empty()
+                status_text.empty()
+                
                 st.success("✅ Master catalogue created!")
                 st.rerun()
+                
+            except Exception as e:
+                progress_bar.empty()
+                status_text.empty()
+                st.error(f"Error creating master catalogue: {str(e)}")
+                st.exception(e)
 
 # Page 4: Master Catalogue
 elif page == "Master Catalogue":

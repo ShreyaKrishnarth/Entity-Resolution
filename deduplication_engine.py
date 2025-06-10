@@ -17,13 +17,14 @@ class DeduplicationEngine:
         self.logger = logging.getLogger(__name__)
         self.vectorizer = None
         
-    def find_duplicates(self, df: pd.DataFrame, config: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def find_duplicates(self, df: pd.DataFrame, config: Dict[str, Any], progress_callback=None) -> List[Dict[str, Any]]:
         """
         Find duplicate products using specified configuration.
         
         Args:
             df: Input dataframe with product data
             config: Configuration dictionary with similarity settings
+            progress_callback: Optional callback function for progress updates
             
         Returns:
             List of duplicate pairs with similarity scores
@@ -49,8 +50,17 @@ class DeduplicationEngine:
             total_comparisons = len(df_clean) * (len(df_clean) - 1) // 2
             self.logger.info(f"Performing {total_comparisons} comparisons")
             
+            comparison_count = 0
+            
             for i in range(len(df_clean)):
                 for j in range(i + 1, len(df_clean)):
+                    comparison_count += 1
+                    
+                    # Update progress if callback provided
+                    if progress_callback and comparison_count % 100 == 0:
+                        progress = (comparison_count / total_comparisons) * 100
+                        progress_callback(progress, f"Comparing products... {comparison_count}/{total_comparisons}")
+                    
                     # Skip if same source (optional)
                     if df_clean.iloc[i]['source'] == df_clean.iloc[j]['source']:
                         continue
@@ -80,6 +90,10 @@ class DeduplicationEngine:
                             'index2': j
                         }
                         duplicates.append(duplicate_pair)
+            
+            # Final progress update
+            if progress_callback:
+                progress_callback(100, f"Completed! Found {len(duplicates)} duplicate pairs")
             
             # Sort by similarity score (highest first)
             duplicates.sort(key=lambda x: x['similarity'], reverse=True)
@@ -285,15 +299,19 @@ class DeduplicationEngine:
         
         for field in secondary_fields:
             if field in record1.index and field in record2.index:
-                val1 = str(record1[field]) if pd.notna(record1[field]) else ''
-                val2 = str(record2[field]) if pd.notna(record2[field]) else ''
-                
-                if val1 and val2:
-                    sim = similarity_func(val1, val2)
-                    similarities.append(sim)
+                try:
+                    val1 = str(record1[field]) if pd.notna(record1[field]) else ''
+                    val2 = str(record2[field]) if pd.notna(record2[field]) else ''
+                    
+                    if val1.strip() != '' and val2.strip() != '':
+                        sim = similarity_func(val1, val2)
+                        similarities.append(float(sim))
+                except Exception as e:
+                    # Skip problematic field comparisons
+                    continue
         
         # Return average similarity or 0 if no valid comparisons
-        return np.mean(similarities) if similarities else 0.0
+        return float(np.mean(similarities)) if similarities else 0.0
     
     def _group_duplicates(self, duplicates: List[Dict[str, Any]]) -> List[List[int]]:
         """
