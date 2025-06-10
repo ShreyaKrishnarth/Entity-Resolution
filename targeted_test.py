@@ -14,9 +14,9 @@ def test_specific_columns():
     print(f"BD dataset: {len(bd_df)} products")
     print(f"TS dataset: {len(ts_df)} products")
     
-    # Extract the specific columns for comparison
-    bd_names = bd_df['product_name'].dropna().str.lower().str.strip().tolist()
-    ts_names = ts_df['name'].dropna().str.lower().str.strip().tolist()
+    # Extract the specific columns for comparison with aggressive normalization
+    bd_names = bd_df['product_name'].dropna().astype(str).str.lower().str.strip().str.replace(r'\s+', ' ', regex=True).tolist()
+    ts_names = ts_df['name'].dropna().astype(str).str.lower().str.strip().str.replace(r'\s+', ' ', regex=True).tolist()
     
     print(f"BD product names: {len(bd_names)}")
     print(f"TS product names: {len(ts_names)}")
@@ -30,9 +30,9 @@ def test_specific_columns():
     for i, name in enumerate(ts_names[:5]):
         print(f"  {i+1}. {name}")
     
-    # Find duplicates using token_sort_ratio
+    # Find duplicates using multiple fuzzy matching algorithms
     duplicates = []
-    threshold = 0.75
+    threshold = 0.65  # Lower threshold to catch more case/space variations
     
     print(f"\nSearching for duplicates with threshold {threshold}...")
     
@@ -44,8 +44,13 @@ def test_specific_columns():
             if not ts_name.strip():
                 continue
             
-            # Use token_sort_ratio for better matching
-            similarity = fuzz.token_sort_ratio(bd_name, ts_name) / 100.0
+            # Use multiple algorithms for better matching
+            token_sort_score = fuzz.token_sort_ratio(bd_name, ts_name) / 100.0
+            token_set_score = fuzz.token_set_ratio(bd_name, ts_name) / 100.0
+            ratio_score = fuzz.ratio(bd_name, ts_name) / 100.0
+            
+            # Take the maximum score from all algorithms
+            similarity = max(token_sort_score, token_set_score, ratio_score)
             
             if similarity >= threshold:
                 duplicates.append({
@@ -53,7 +58,10 @@ def test_specific_columns():
                     'ts_idx': j,
                     'bd_name': bd_name,
                     'ts_name': ts_name,
-                    'similarity': similarity
+                    'similarity': similarity,
+                    'token_sort': token_sort_score,
+                    'token_set': token_set_score,
+                    'ratio': ratio_score
                 })
     
     print(f"Found {len(duplicates)} potential duplicates")
@@ -65,7 +73,7 @@ def test_specific_columns():
     for i, dup in enumerate(duplicates[:15]):
         print(f"  {i+1:2d}. {dup['similarity']:.3f}: '{dup['bd_name']}' vs '{dup['ts_name']}'")
     
-    # Create master catalogue with specific output format
+    # Create master catalogue with mixed order (not sorted)
     master_records = []
     used_bd_indices = set()
     used_ts_indices = set()
@@ -85,14 +93,15 @@ def test_specific_columns():
                 'description': bd_row['description'] if pd.notna(bd_row['description']) and len(str(bd_row['description'])) > 50 else ts_row['description'],
                 'url': bd_row['seller_website'] if pd.notna(bd_row['seller_website']) else ts_row['url'],
                 'category': bd_row['main_category'] if pd.notna(bd_row['main_category']) else ts_row['category'],
-                'source': 'bd + ts'
+                'source': 'bd + ts',
+                'original_order': min(bd_idx, ts_idx + 1000)  # Maintain relative order
             }
             
             master_records.append(merged_record)
             used_bd_indices.add(bd_idx)
             used_ts_indices.add(ts_idx)
     
-    # Add unique records from BD dataset
+    # Add unique records from BD dataset with their original positions
     for i, row in bd_df.iterrows():
         if i not in used_bd_indices:
             master_records.append({
@@ -100,10 +109,11 @@ def test_specific_columns():
                 'description': row['description'] if pd.notna(row['description']) else '',
                 'url': row['seller_website'] if pd.notna(row['seller_website']) else '',
                 'category': row['main_category'] if pd.notna(row['main_category']) else '',
-                'source': 'bd'
+                'source': 'bd',
+                'original_order': i
             })
     
-    # Add unique records from TS dataset
+    # Add unique records from TS dataset with their original positions
     for i, row in ts_df.iterrows():
         if i not in used_ts_indices:
             master_records.append({
@@ -111,8 +121,16 @@ def test_specific_columns():
                 'description': row['description'] if pd.notna(row['description']) else '',
                 'url': row['url'] if pd.notna(row['url']) else '',
                 'category': row['category'] if pd.notna(row['category']) else '',
-                'source': 'ts'
+                'source': 'ts',
+                'original_order': i + 1000  # Offset to maintain mixed order
             })
+    
+    # Sort by original order to maintain natural jumbled sequence
+    master_records.sort(key=lambda x: x['original_order'])
+    
+    # Remove the ordering column
+    for record in master_records:
+        del record['original_order']
     
     # Create final master catalogue
     master_df = pd.DataFrame(master_records)
