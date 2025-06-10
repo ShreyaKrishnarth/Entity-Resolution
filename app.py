@@ -61,51 +61,216 @@ if page == "Data Upload":
     st.header("📁 Data Upload")
     st.markdown("Upload your CSV files containing product data for deduplication.")
     
+    # Upload instructions
+    st.info("💡 **Tip:** You can drag and drop CSV files directly onto the upload areas below, or click to browse and select files from your computer.")
+    
+    # Enhanced drag-and-drop file upload
+    st.markdown("""
+    <style>
+    .upload-section {
+        border: 2px dashed #cccccc;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        margin: 10px 0;
+        background-color: #fafafa;
+    }
+    .upload-section:hover {
+        border-color: #1f77b4;
+        background-color: #f0f8ff;
+    }
+    .file-details {
+        background-color: #e8f4fd;
+        padding: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     col1, col2 = st.columns(2)
     
     with col1:
-        st.subheader("Dataset 1")
+        st.markdown('<div class="upload-section">', unsafe_allow_html=True)
+        st.subheader("📁 Dataset 1")
+        st.markdown("**Drag and drop your first CSV file here**")
+        
         uploaded_file1 = st.file_uploader(
             "Choose first CSV file",
             type=['csv'],
-            key="file1"
+            key="file1",
+            help="Drag and drop a CSV file or click to browse"
         )
+        st.markdown('</div>', unsafe_allow_html=True)
         
         if uploaded_file1 is not None:
             try:
+                # Show file info before processing
+                file_size = uploaded_file1.size / 1024  # KB
+                st.markdown(f'<div class="file-details">', unsafe_allow_html=True)
+                st.write(f"**File:** {uploaded_file1.name}")
+                st.write(f"**Size:** {file_size:.1f} KB")
+                
+                # Read and preview data
                 df1 = pd.read_csv(uploaded_file1)
                 st.session_state.datasets['dataset1'] = {
                     'name': uploaded_file1.name,
                     'data': df1
                 }
-                st.success(f"✅ Loaded {uploaded_file1.name}")
-                st.write(f"Shape: {df1.shape}")
-                st.write("Columns:", list(df1.columns))
+                
+                st.success(f"✅ Successfully loaded {uploaded_file1.name}")
+                st.write(f"**Shape:** {df1.shape[0]} rows × {df1.shape[1]} columns")
+                
+                # Column preview
+                with st.expander("📋 Column Preview", expanded=False):
+                    col_info = []
+                    for col in df1.columns:
+                        null_count = df1[col].isnull().sum()
+                        null_pct = (null_count / len(df1)) * 100
+                        col_info.append({
+                            'Column': col,
+                            'Type': str(df1[col].dtype),
+                            'Missing': f"{null_count} ({null_pct:.1f}%)",
+                            'Sample': str(df1[col].dropna().iloc[0]) if not df1[col].dropna().empty else "N/A"
+                        })
+                    st.dataframe(pd.DataFrame(col_info), use_container_width=True)
+                
+                # Data preview
+                with st.expander("👀 Data Preview", expanded=False):
+                    st.dataframe(df1.head(10), use_container_width=True)
+                
+                st.markdown('</div>', unsafe_allow_html=True)
                 
             except Exception as e:
                 st.error(f"Error loading file: {str(e)}")
+                st.info("Please ensure your file is a valid CSV format")
     
     with col2:
-        st.subheader("Dataset 2")
+        st.markdown('<div class="upload-section">', unsafe_allow_html=True)
+        st.subheader("📁 Dataset 2")
+        st.markdown("**Drag and drop your second CSV file here**")
+        
         uploaded_file2 = st.file_uploader(
             "Choose second CSV file",
             type=['csv'],
-            key="file2"
+            key="file2",
+            help="Drag and drop a CSV file or click to browse"
         )
+        st.markdown('</div>', unsafe_allow_html=True)
         
         if uploaded_file2 is not None:
             try:
+                # Show file info before processing
+                file_size = uploaded_file2.size / 1024  # KB
+                st.markdown(f'<div class="file-details">', unsafe_allow_html=True)
+                st.write(f"**File:** {uploaded_file2.name}")
+                st.write(f"**Size:** {file_size:.1f} KB")
+                
+                # Read and preview data
                 df2 = pd.read_csv(uploaded_file2)
                 st.session_state.datasets['dataset2'] = {
                     'name': uploaded_file2.name,
                     'data': df2
                 }
-                st.success(f"✅ Loaded {uploaded_file2.name}")
-                st.write(f"Shape: {df2.shape}")
-                st.write("Columns:", list(df2.columns))
+                
+                st.success(f"✅ Successfully loaded {uploaded_file2.name}")
+                st.write(f"**Shape:** {df2.shape[0]} rows × {df2.shape[1]} columns")
+                
+                # Column preview
+                with st.expander("📋 Column Preview", expanded=False):
+                    col_info = []
+                    for col in df2.columns:
+                        null_count = df2[col].isnull().sum()
+                        null_pct = (null_count / len(df2)) * 100
+                        col_info.append({
+                            'Column': col,
+                            'Type': str(df2[col].dtype),
+                            'Missing': f"{null_count} ({null_pct:.1f}%)",
+                            'Sample': str(df2[col].dropna().iloc[0]) if not df2[col].dropna().empty else "N/A"
+                        })
+                    st.dataframe(pd.DataFrame(col_info), use_container_width=True)
+                
+                # Data preview
+                with st.expander("👀 Data Preview", expanded=False):
+                    st.dataframe(df2.head(10), use_container_width=True)
+                
+                st.markdown('</div>', unsafe_allow_html=True)
                 
             except Exception as e:
                 st.error(f"Error loading file: {str(e)}")
+                st.info("Please ensure your file is a valid CSV format")
+    
+    # Dataset comparison summary
+    if len(st.session_state.datasets) >= 2:
+        st.markdown("---")
+        st.subheader("📊 Dataset Comparison Summary")
+        
+        # Get datasets
+        datasets = list(st.session_state.datasets.values())
+        df1, df2 = datasets[0]['data'], datasets[1]['data']
+        name1, name2 = datasets[0]['name'], datasets[1]['name']
+        
+        # Comparison metrics
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric(
+                label="Dataset 1 Rows",
+                value=f"{len(df1):,}",
+                delta=f"{name1}"
+            )
+        
+        with col2:
+            st.metric(
+                label="Dataset 2 Rows", 
+                value=f"{len(df2):,}",
+                delta=f"{name2}"
+            )
+        
+        with col3:
+            common_cols = set(df1.columns) & set(df2.columns)
+            st.metric(
+                label="Common Columns",
+                value=len(common_cols),
+                delta=f"out of {max(len(df1.columns), len(df2.columns))}"
+            )
+        
+        with col4:
+            total_products = len(df1) + len(df2)
+            st.metric(
+                label="Total Products",
+                value=f"{total_products:,}",
+                delta="to be deduplicated"
+            )
+        
+        # Column mapping preview
+        with st.expander("🔗 Column Mapping Preview", expanded=False):
+            col_map_data = []
+            all_cols = set(df1.columns) | set(df2.columns)
+            
+            for col in sorted(all_cols):
+                in_df1 = "✅" if col in df1.columns else "❌"
+                in_df2 = "✅" if col in df2.columns else "❌"
+                
+                # Predict standardized name
+                standardized = col.lower().strip()
+                mapping = {
+                    'product_name': 'name', 'name_clean': 'name', 'title': 'name',
+                    'description_clean': 'description', 'desc': 'description', 'overview': 'description',
+                    'main_category': 'category', 'category_slug': 'category', 'parent_category': 'category',
+                    'seller_website': 'url', 'website': 'url',
+                    'software_product_id': 'product_id', 'technology_id': 'product_id', 'id': 'product_id'
+                }
+                predicted_name = mapping.get(standardized, standardized)
+                
+                col_map_data.append({
+                    'Original Column': col,
+                    'In Dataset 1': in_df1,
+                    'In Dataset 2': in_df2,
+                    'Will Map To': predicted_name
+                })
+            
+            st.dataframe(pd.DataFrame(col_map_data), use_container_width=True)
     
     # Load sample datasets button
     st.markdown("---")
