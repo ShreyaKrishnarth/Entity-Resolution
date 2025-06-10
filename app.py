@@ -20,6 +20,327 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Professional styling
+st.markdown("""
+<style>
+    /* Import Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    /* Global styles */
+    .main {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    /* Header styling */
+    .main-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+    }
+    
+    .main-header h1 {
+        color: white;
+        font-weight: 700;
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .main-header p {
+        color: rgba(255,255,255,0.9);
+        font-size: 1.1rem;
+        font-weight: 300;
+        margin: 0;
+    }
+    
+    /* Sidebar styling */
+    .css-1d391kg {
+        background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+    }
+    
+    /* Navigation styling */
+    .nav-section {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        margin-bottom: 1.5rem;
+        border: 1px solid #e2e8f0;
+    }
+    
+    /* Status indicators */
+    .status-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .status-item {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        border-left: 4px solid #10b981;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        font-size: 0.9rem;
+    }
+    
+    .status-item.incomplete {
+        border-left-color: #ef4444;
+    }
+    
+    /* Card styling */
+    .metric-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        text-align: center;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+    
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+    }
+    
+    .metric-label {
+        color: #6b7280;
+        font-weight: 500;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    /* Upload section styling */
+    .upload-container {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 6px 25px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 2rem;
+    }
+    
+    .upload-zone {
+        border: 2px dashed #d1d5db;
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        background: linear-gradient(45deg, #f9fafb 0%, #f3f4f6 100%);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .upload-zone::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+        transition: left 0.5s ease;
+    }
+    
+    .upload-zone:hover {
+        border-color: #667eea;
+        background: linear-gradient(45deg, #f0f7ff 0%, #e6f3ff 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+    }
+    
+    .upload-zone:hover::before {
+        left: 100%;
+    }
+    
+    .upload-icon {
+        font-size: 3rem;
+        color: #667eea;
+        margin-bottom: 1rem;
+    }
+    
+    .upload-text {
+        font-size: 1.1rem;
+        color: #374151;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+    
+    .upload-subtext {
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+    
+    /* File details styling */
+    .file-info {
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        border: 1px solid #a7f3d0;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin: 1rem 0;
+    }
+    
+    .file-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .file-icon {
+        font-size: 2rem;
+        margin-right: 1rem;
+        color: #059669;
+    }
+    
+    .file-name {
+        font-weight: 600;
+        color: #065f46;
+        font-size: 1.1rem;
+    }
+    
+    .file-size {
+        color: #047857;
+        font-size: 0.9rem;
+        margin-left: auto;
+    }
+    
+    /* Button styling */
+    .stButton > button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    /* Progress bar styling */
+    .stProgress .st-bo {
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        border-radius: 10px;
+    }
+    
+    /* Expander styling */
+    .streamlit-expanderHeader {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    /* Success/Error message styling */
+    .stAlert {
+        border-radius: 8px;
+        border: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    /* Dataframe styling */
+    .stDataFrame {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    /* Tab styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        background: white;
+        border-radius: 8px;
+        padding: 1rem 1.5rem;
+        border: 1px solid #e2e8f0;
+        font-weight: 500;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: #667eea;
+    }
+    
+    /* Section headers */
+    .section-header {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 2rem;
+    }
+    
+    .section-header h2 {
+        color: #1f2937;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .section-header p {
+        color: #6b7280;
+        margin: 0;
+    }
+    
+    /* Comparison grid */
+    .comparison-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 2rem 0;
+    }
+    
+    /* Loading animations */
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+    
+    .loading {
+        animation: pulse 2s infinite;
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6b4590 100%);
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # Initialize session state
 if 'datasets' not in st.session_state:
     st.session_state.datasets = {}
@@ -30,20 +351,34 @@ if 'duplicates' not in st.session_state:
 if 'master_catalogue' not in st.session_state:
     st.session_state.master_catalogue = None
 
-# Main title
-st.title("🔍 Product Catalogue Deduplication")
-st.markdown("**Merge and deduplicate product catalogs using advanced text similarity algorithms**")
+# Main header
+st.markdown("""
+<div class="main-header">
+    <h1>🔍 Product Catalogue Deduplication</h1>
+    <p>Merge and deduplicate product catalogs using advanced text similarity algorithms</p>
+</div>
+""", unsafe_allow_html=True)
 
 # Sidebar for navigation
 with st.sidebar:
-    st.header("Navigation")
+    st.markdown("""
+    <div class="nav-section">
+        <h3 style="margin-bottom: 1rem; color: #1f2937; font-weight: 600;">Navigation</h3>
+    </div>
+    """, unsafe_allow_html=True)
+    
     page = st.radio(
-        "Select Page:",
-        ["Data Upload", "Data Exploration", "Deduplication", "Master Catalogue", "Export & Documentation"]
+        "",
+        ["Data Upload", "Data Exploration", "Deduplication", "Master Catalogue", "Export & Documentation"],
+        label_visibility="collapsed"
     )
     
-    st.markdown("---")
-    st.markdown("### Current Status")
+    # Status indicators with enhanced styling
+    st.markdown("""
+    <div class="nav-section">
+        <h4 style="margin-bottom: 1rem; color: #1f2937; font-weight: 600;">Project Status</h4>
+        <div class="status-grid">
+    """, unsafe_allow_html=True)
     
     # Status indicators
     datasets_loaded = len(st.session_state.datasets) > 0
@@ -51,154 +386,195 @@ with st.sidebar:
     duplicates_found = st.session_state.duplicates is not None
     catalogue_created = st.session_state.master_catalogue is not None
     
-    st.write("📁 Datasets Loaded:", "✅" if datasets_loaded else "❌")
-    st.write("🧹 Data Processed:", "✅" if data_processed else "❌")
-    st.write("🔍 Duplicates Found:", "✅" if duplicates_found else "❌")
-    st.write("📋 Catalogue Created:", "✅" if catalogue_created else "❌")
+    status_items = [
+        ("📁 Datasets", datasets_loaded),
+        ("🧹 Processing", data_processed),
+        ("🔍 Duplicates", duplicates_found),
+        ("📋 Catalogue", catalogue_created)
+    ]
+    
+    for label, completed in status_items:
+        status_class = "status-item" if completed else "status-item incomplete"
+        icon = "✅" if completed else "⏳"
+        st.markdown(f"""
+        <div class="{status_class}">
+            <strong>{label}</strong><br>
+            <span style="font-size: 0.8rem;">{icon} {'Complete' if completed else 'Pending'}</span>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("</div></div>", unsafe_allow_html=True)
 
 # Page 1: Data Upload
 if page == "Data Upload":
-    st.header("📁 Data Upload")
-    st.markdown("Upload your CSV files containing product data for deduplication.")
+    st.markdown("""
+    <div class="section-header">
+        <h2>📁 Data Upload</h2>
+        <p>Upload your CSV files containing product data for intelligent deduplication processing</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Upload instructions
-    st.info("💡 **Tip:** You can drag and drop CSV files directly onto the upload areas below, or click to browse and select files from your computer.")
-    
-    # Enhanced drag-and-drop file upload
     st.markdown("""
-    <style>
-    .upload-section {
-        border: 2px dashed #cccccc;
-        border-radius: 10px;
-        padding: 20px;
-        text-align: center;
-        margin: 10px 0;
-        background-color: #fafafa;
-    }
-    .upload-section:hover {
-        border-color: #1f77b4;
-        background-color: #f0f8ff;
-    }
-    .file-details {
-        background-color: #e8f4fd;
-        padding: 10px;
-        border-radius: 5px;
-        margin: 10px 0;
-    }
-    </style>
+    <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); 
+                padding: 1.5rem; border-radius: 12px; border: 1px solid #93c5fd; margin-bottom: 2rem;">
+        <div style="display: flex; align-items: center;">
+            <div style="font-size: 1.5rem; margin-right: 1rem;">💡</div>
+            <div>
+                <strong style="color: #1e40af;">Quick Start:</strong><br>
+                <span style="color: #3730a3;">Drag and drop CSV files directly onto the upload zones below, or click to browse your files</span>
+            </div>
+        </div>
+    </div>
     """, unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown('<div class="upload-section">', unsafe_allow_html=True)
-        st.subheader("📁 Dataset 1")
-        st.markdown("**Drag and drop your first CSV file here**")
+        st.markdown("""
+        <div class="upload-container">
+            <div class="upload-zone">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">Dataset 1</div>
+                <div class="upload-subtext">Drag and drop your first CSV file here</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         
         uploaded_file1 = st.file_uploader(
             "Choose first CSV file",
             type=['csv'],
             key="file1",
-            help="Drag and drop a CSV file or click to browse"
+            help="Drag and drop a CSV file or click to browse",
+            label_visibility="collapsed"
         )
-        st.markdown('</div>', unsafe_allow_html=True)
         
         if uploaded_file1 is not None:
             try:
-                # Show file info before processing
+                # Show file info with professional styling
                 file_size = uploaded_file1.size / 1024  # KB
-                st.markdown(f'<div class="file-details">', unsafe_allow_html=True)
-                st.write(f"**File:** {uploaded_file1.name}")
-                st.write(f"**Size:** {file_size:.1f} KB")
-                
-                # Read and preview data
                 df1 = pd.read_csv(uploaded_file1)
                 st.session_state.datasets['dataset1'] = {
                     'name': uploaded_file1.name,
                     'data': df1
                 }
                 
-                st.success(f"✅ Successfully loaded {uploaded_file1.name}")
-                st.write(f"**Shape:** {df1.shape[0]} rows × {df1.shape[1]} columns")
+                st.markdown(f"""
+                <div class="file-info">
+                    <div class="file-header">
+                        <div class="file-icon">📊</div>
+                        <div>
+                            <div class="file-name">{uploaded_file1.name}</div>
+                            <div style="color: #047857; font-size: 0.9rem;">{df1.shape[0]:,} rows × {df1.shape[1]} columns</div>
+                        </div>
+                        <div class="file-size">{file_size:.1f} KB</div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
                 
-                # Column preview
-                with st.expander("📋 Column Preview", expanded=False):
+                # Column preview with enhanced styling
+                with st.expander("📋 Column Analysis", expanded=False):
                     col_info = []
                     for col in df1.columns:
                         null_count = df1[col].isnull().sum()
                         null_pct = (null_count / len(df1)) * 100
+                        sample_val = str(df1[col].dropna().iloc[0]) if not df1[col].dropna().empty else "N/A"
+                        if len(sample_val) > 50:
+                            sample_val = sample_val[:47] + "..."
                         col_info.append({
                             'Column': col,
                             'Type': str(df1[col].dtype),
-                            'Missing': f"{null_count} ({null_pct:.1f}%)",
-                            'Sample': str(df1[col].dropna().iloc[0]) if not df1[col].dropna().empty else "N/A"
+                            'Missing': f"{null_pct:.1f}%",
+                            'Sample': sample_val
                         })
-                    st.dataframe(pd.DataFrame(col_info), use_container_width=True)
+                    st.dataframe(pd.DataFrame(col_info), use_container_width=True, hide_index=True)
                 
-                # Data preview
+                # Data preview with enhanced styling
                 with st.expander("👀 Data Preview", expanded=False):
-                    st.dataframe(df1.head(10), use_container_width=True)
-                
-                st.markdown('</div>', unsafe_allow_html=True)
+                    st.dataframe(df1.head(10), use_container_width=True, hide_index=True)
                 
             except Exception as e:
-                st.error(f"Error loading file: {str(e)}")
-                st.info("Please ensure your file is a valid CSV format")
+                st.markdown(f"""
+                <div style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); 
+                            border: 1px solid #fca5a5; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                    <strong style="color: #dc2626;">Upload Error:</strong><br>
+                    <span style="color: #991b1b;">{str(e)}</span><br>
+                    <small style="color: #7f1d1d;">Please ensure your file is a valid CSV format</small>
+                </div>
+                """, unsafe_allow_html=True)
     
     with col2:
-        st.markdown('<div class="upload-section">', unsafe_allow_html=True)
-        st.subheader("📁 Dataset 2")
-        st.markdown("**Drag and drop your second CSV file here**")
+        st.markdown("""
+        <div class="upload-container">
+            <div class="upload-zone">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">Dataset 2</div>
+                <div class="upload-subtext">Drag and drop your second CSV file here</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         
         uploaded_file2 = st.file_uploader(
             "Choose second CSV file",
             type=['csv'],
             key="file2",
-            help="Drag and drop a CSV file or click to browse"
+            help="Drag and drop a CSV file or click to browse",
+            label_visibility="collapsed"
         )
-        st.markdown('</div>', unsafe_allow_html=True)
         
         if uploaded_file2 is not None:
             try:
-                # Show file info before processing
+                # Show file info with professional styling
                 file_size = uploaded_file2.size / 1024  # KB
-                st.markdown(f'<div class="file-details">', unsafe_allow_html=True)
-                st.write(f"**File:** {uploaded_file2.name}")
-                st.write(f"**Size:** {file_size:.1f} KB")
-                
-                # Read and preview data
                 df2 = pd.read_csv(uploaded_file2)
                 st.session_state.datasets['dataset2'] = {
                     'name': uploaded_file2.name,
                     'data': df2
                 }
                 
-                st.success(f"✅ Successfully loaded {uploaded_file2.name}")
-                st.write(f"**Shape:** {df2.shape[0]} rows × {df2.shape[1]} columns")
+                st.markdown(f"""
+                <div class="file-info">
+                    <div class="file-header">
+                        <div class="file-icon">📊</div>
+                        <div>
+                            <div class="file-name">{uploaded_file2.name}</div>
+                            <div style="color: #047857; font-size: 0.9rem;">{df2.shape[0]:,} rows × {df2.shape[1]} columns</div>
+                        </div>
+                        <div class="file-size">{file_size:.1f} KB</div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
                 
-                # Column preview
-                with st.expander("📋 Column Preview", expanded=False):
+                # Column preview with enhanced styling
+                with st.expander("📋 Column Analysis", expanded=False):
                     col_info = []
                     for col in df2.columns:
                         null_count = df2[col].isnull().sum()
                         null_pct = (null_count / len(df2)) * 100
+                        sample_val = str(df2[col].dropna().iloc[0]) if not df2[col].dropna().empty else "N/A"
+                        if len(sample_val) > 50:
+                            sample_val = sample_val[:47] + "..."
                         col_info.append({
                             'Column': col,
                             'Type': str(df2[col].dtype),
-                            'Missing': f"{null_count} ({null_pct:.1f}%)",
-                            'Sample': str(df2[col].dropna().iloc[0]) if not df2[col].dropna().empty else "N/A"
+                            'Missing': f"{null_pct:.1f}%",
+                            'Sample': sample_val
                         })
-                    st.dataframe(pd.DataFrame(col_info), use_container_width=True)
+                    st.dataframe(pd.DataFrame(col_info), use_container_width=True, hide_index=True)
                 
-                # Data preview
+                # Data preview with enhanced styling
                 with st.expander("👀 Data Preview", expanded=False):
-                    st.dataframe(df2.head(10), use_container_width=True)
-                
-                st.markdown('</div>', unsafe_allow_html=True)
+                    st.dataframe(df2.head(10), use_container_width=True, hide_index=True)
                 
             except Exception as e:
-                st.error(f"Error loading file: {str(e)}")
-                st.info("Please ensure your file is a valid CSV format")
+                st.markdown(f"""
+                <div style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); 
+                            border: 1px solid #fca5a5; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                    <strong style="color: #dc2626;">Upload Error:</strong><br>
+                    <span style="color: #991b1b;">{str(e)}</span><br>
+                    <small style="color: #7f1d1d;">Please ensure your file is a valid CSV format</small>
+                </div>
+                """, unsafe_allow_html=True)
     
     # Dataset comparison summary
     if len(st.session_state.datasets) >= 2:
