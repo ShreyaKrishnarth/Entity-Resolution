@@ -61,8 +61,8 @@ class DeduplicationEngine:
                         progress = (comparison_count / total_comparisons) * 100
                         progress_callback(progress, f"Comparing products... {comparison_count}/{total_comparisons}")
                     
-                    # Skip if same source (optional)
-                    if df_clean.iloc[i]['source'] == df_clean.iloc[j]['source']:
+                    # Skip exact same product (same index)
+                    if i == j:
                         continue
                     
                     # Calculate primary similarity
@@ -312,8 +312,10 @@ class DeduplicationEngine:
         for field in secondary_fields:
             if field in record1.index and field in record2.index:
                 try:
-                    val1 = str(record1[field]) if pd.notna(record1[field]) else ''
-                    val2 = str(record2[field]) if pd.notna(record2[field]) else ''
+                    val1_raw = record1[field] 
+                    val2_raw = record2[field]
+                    val1 = str(val1_raw) if val1_raw is not None and not (isinstance(val1_raw, float) and np.isnan(val1_raw)) else ''
+                    val2 = str(val2_raw) if val2_raw is not None and not (isinstance(val2_raw, float) and np.isnan(val2_raw)) else ''
                     
                     if val1.strip() != '' and val2.strip() != '':
                         sim = similarity_func(val1, val2)
