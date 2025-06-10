@@ -32,7 +32,7 @@ def test_specific_columns():
     
     # Find duplicates using multiple fuzzy matching algorithms
     duplicates = []
-    threshold = 0.65  # Lower threshold to catch more case/space variations
+    threshold = 0.75  # Balanced threshold for quality matches
     
     print(f"\nSearching for duplicates with threshold {threshold}...")
     
@@ -49,8 +49,15 @@ def test_specific_columns():
             token_set_score = fuzz.token_set_ratio(bd_name, ts_name) / 100.0
             ratio_score = fuzz.ratio(bd_name, ts_name) / 100.0
             
-            # Take the maximum score from all algorithms
-            similarity = max(token_sort_score, token_set_score, ratio_score)
+            # Check for exact match after normalization (case-insensitive)
+            if bd_name == ts_name:
+                similarity = 1.0
+            # For very short names, require higher similarity to avoid false positives
+            elif len(bd_name) <= 10 or len(ts_name) <= 10:
+                similarity = max(token_sort_score, ratio_score)  # Don't use token_set for short names
+            else:
+                # For longer names, use the best score from all algorithms
+                similarity = max(token_sort_score, token_set_score, ratio_score)
             
             if similarity >= threshold:
                 duplicates.append({

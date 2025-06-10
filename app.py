@@ -837,9 +837,9 @@ elif page == "Deduplication":
             "Similarity Threshold",
             min_value=0.3,
             max_value=1.0,
-            value=0.65,
+            value=0.75,
             step=0.05,
-            help="Lower threshold catches case/space variations like 'Amazon' vs 'amazon'"
+            help="Threshold for detecting duplicates. Handles case/space variations like 'Amazon' vs 'amazon'"
         )
         
         algorithm = st.selectbox(

@@ -32,8 +32,8 @@ class DeduplicationEngine:
         duplicates = []
         
         try:
-            # Extract configuration with lower threshold for case/space variations
-            threshold = config.get('similarity_threshold', 0.65)
+            # Extract configuration with optimal threshold for case/space variations
+            threshold = config.get('similarity_threshold', 0.75)
             algorithm = config.get('algorithm', 'fuzzy_token_sort')
             primary_field = config.get('primary_field', 'name')
             use_secondary = config.get('use_secondary_fields', False)  # Focus on primary field only
