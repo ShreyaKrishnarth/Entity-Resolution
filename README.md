@@ -1,6 +1,7 @@
 # Product Catalogue Deduplication System
 
 A comprehensive Streamlit-based application for merging and deduplicating product catalogs using advanced text similarity algorithms. This system helps create master product catalogues by identifying and consolidating duplicate products across multiple data sources.
+![Uploading Screenshot 2025-06-11 071211.png…]()
 
 ## Features
 
