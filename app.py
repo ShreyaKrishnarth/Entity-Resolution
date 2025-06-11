@@ -1059,9 +1059,10 @@ elif page == "Export & Documentation":
     col1, col2 = st.columns(2)
     
     with col1:
-        # Export master catalogue
-        if st.button("📥 Download Master Catalogue", type="primary"):
-            # Ensure only required columns are in the output
+        st.subheader("Master Catalogue Download")
+        
+        # Prepare the master catalogue for download
+        if st.session_state.master_catalogue is not None:
             output_df = st.session_state.master_catalogue.copy()
             
             # Define the exact columns we want in the output
@@ -1073,20 +1074,19 @@ elif page == "Export & Documentation":
             if available_columns:
                 output_df = output_df[available_columns]
             
-            # Show preview of what will be downloaded
-            st.subheader("Export Preview")
-            st.info(f"Exporting {len(output_df)} products with columns: {', '.join(output_df.columns)}")
-            st.dataframe(output_df.head(5), use_container_width=True)
+            # Show preview
+            st.info(f"Ready to export {len(output_df)} products with columns: {', '.join(output_df.columns)}")
+            st.dataframe(output_df.head(3), use_container_width=True)
             
-            csv_buffer = io.StringIO()
-            output_df.to_csv(csv_buffer, index=False)
-            csv_string = csv_buffer.getvalue()
+            # Convert to CSV
+            csv_data = output_df.to_csv(index=False)
             
             st.download_button(
-                label="Download CSV File",
-                data=csv_string,
+                label="Download Master Catalogue CSV",
+                data=csv_data,
                 file_name=f"master_catalogue_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                mime="text/csv"
+                mime="text/csv",
+                type="primary"
             )
     
     with col2:
